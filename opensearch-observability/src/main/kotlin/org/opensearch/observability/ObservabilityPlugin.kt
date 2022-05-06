@@ -23,7 +23,9 @@ import org.opensearch.observability.action.CreateObservabilityObjectAction
 import org.opensearch.observability.action.DeleteObservabilityObjectAction
 import org.opensearch.observability.action.GetObservabilityObjectAction
 import org.opensearch.observability.action.UpdateObservabilityObjectAction
+import org.opensearch.observability.index.CollaborationIndex
 import org.opensearch.observability.index.ObservabilityIndex
+import org.opensearch.observability.resthandler.CollaborationsRestHandler
 import org.opensearch.observability.resthandler.ObservabilityRestHandler
 import org.opensearch.observability.settings.PluginSettings
 import org.opensearch.plugins.ActionPlugin
@@ -47,6 +49,7 @@ class ObservabilityPlugin : Plugin(), ActionPlugin {
         const val LOG_PREFIX = "observability"
         const val BASE_OBSERVABILITY_URI = "/_plugins/_observability"
         const val BASE_NOTEBOOKS_URI = "/_plugins/_notebooks"
+        const val BASE_COLLABORATION_URI = "/_plugins/_collaborations"
     }
 
     /**
@@ -74,6 +77,7 @@ class ObservabilityPlugin : Plugin(), ActionPlugin {
     ): Collection<Any> {
         PluginSettings.addSettingsUpdateConsumer(clusterService)
         ObservabilityIndex.initialize(client, clusterService)
+        CollaborationIndex.initialize(client, clusterService)
         return emptyList()
     }
 
@@ -90,7 +94,8 @@ class ObservabilityPlugin : Plugin(), ActionPlugin {
         nodesInCluster: Supplier<DiscoveryNodes>
     ): List<RestHandler> {
         return listOf(
-            ObservabilityRestHandler()
+            ObservabilityRestHandler(),
+            CollaborationsRestHandler()
         )
     }
 

@@ -14,6 +14,12 @@ internal object RestTag {
     const val QUERY_FIELD = "query"
     const val OBJECT_LIST_FIELD = "observabilityObjectList"
     const val DELETE_RESPONSE_LIST_TAG = "deleteResponseList"
+    const val COLLABORATION_ID_FIELD = "collaborationId"
+    const val COMMENT_ID_FIELD = "commentId"
+    const val COLLABORATION_FIELD = "collaborations"
+    const val COMMENT_FIELD = "comment"
+    const val COLLAB_TEXT_FIELD = "TEXT" //TODO: better name
+    const val COLLAB_VIZ_FIELD = "VIZ" //TODO: better name
     const val OBJECT_TYPE_FIELD = "objectType"
     const val OBJECT_ID_FIELD = "objectId"
     const val OBJECT_ID_LIST_FIELD = "objectIdList"

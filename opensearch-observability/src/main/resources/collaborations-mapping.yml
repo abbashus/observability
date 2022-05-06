@@ -1,0 +1,78 @@
+---
+##
+# Copyright OpenSearch Contributors
+# SPDX-License-Identifier: Apache-2.0
+##
+
+# Schema file for the collaborations index
+# Since we only search based on "access", sort on lastUpdatedTimeMs & createdTimeMs,
+# other fields are not used in mapping to avoid index on those fields.
+# Also "dynamic" is set to "false" so that other fields can be added.
+
+#  Example collaboration object
+#  lastUpdatedTimeMs: <epoch_millis>
+#  createdTimeMs: <epoch_millis>
+#  tenant: ""
+#  access: [
+#      "User:admin",
+#      "Role:own_index",
+#      "Role:all_access",
+#      "BERole:admin"
+#  ]
+#  collaboration: #the document ID of this object becomes collaboration ID
+#    type: TEXT | VIZ
+#    text:
+#      - pageId # notebookId in case of notebooks
+#      - paragraphId # notebook paragraph Id
+#      - lineId # unique identifier for a line
+#    visualization:
+#      - savedVisulizationId
+#      - startTime : <epoch_millis>
+#      - endTime : <epoch_millis>
+#    tags: ["prod" , "dashboard" ]? [same as in Grafana, may be we can do search comments based on tags in a dedicated chat page]
+#    resolved: true | false (defaults to false)
+
+
+#  Example comment object
+#  lastUpdatedTimeMs: <epoch_millis>
+#  createdTimeMs: <epoch_millis>
+#  tenant: ""
+#  access: [
+#      "User:admin",
+#      "Role:own_index",
+#      "Role:all_access",
+#      "BERole:admin"
+#  ]
+#  comments:
+#    collaborationId: <document Id of collab definition doc>
+#    text: "the new security patch was deployed at this point? does this correlate to the spike we see?"
+
+
+dynamic: false
+properties:
+  lastUpdatedTimeMs:
+    type: date
+    format: epoch_millis
+  createdTimeMs:
+    type: date
+    format: epoch_millis
+  tenant:
+    type: keyword
+  access: # Array of access details like user,role,backend_role etc
+    type: keyword
+  collaboration:
+    type: object
+    properties:
+      type:
+        type: text
+        fields:
+          keyword:
+            type: keyword
+  comment:
+    type: object
+    properties:
+      collaborationId:
+        type: text
+        fields:
+          keyword:
+            type: keyword
