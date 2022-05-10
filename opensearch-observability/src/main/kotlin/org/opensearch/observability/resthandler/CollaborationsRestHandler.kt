@@ -7,11 +7,10 @@ package org.opensearch.observability.resthandler
 import org.opensearch.client.node.NodeClient
 import org.opensearch.commons.utils.logger
 import org.opensearch.observability.ObservabilityPlugin.Companion.BASE_COLLABORATION_URI
-import org.opensearch.observability.action.*
 import org.opensearch.observability.action.CreateCollaborationObjectAction
-import org.opensearch.observability.action.CreateObservabilityObjectRequest
-import org.opensearch.observability.model.ObservabilityObjectType
+import org.opensearch.observability.action.CreateCollaborationObjectRequest
 import org.opensearch.observability.model.RestTag.COLLABORATION_ID_FIELD
+// import org.opensearch.observability.model.RestTag.COLLABORATION_ID_LIST_FIELD
 import org.opensearch.observability.model.RestTag.COMMENT_ID_FIELD
 import org.opensearch.observability.util.contentParserNextToken
 import org.opensearch.rest.BaseRestHandler
@@ -24,7 +23,6 @@ import org.opensearch.rest.RestRequest.Method.GET
 import org.opensearch.rest.RestRequest.Method.POST
 import org.opensearch.rest.RestRequest.Method.PUT
 import org.opensearch.rest.RestStatus
-import java.util.EnumSet
 
 /**
  * Rest handler for observability object lifecycle management.
@@ -35,7 +33,7 @@ internal class CollaborationsRestHandler : BaseRestHandler() {
         private const val COLLABORATION_ACTION = "collaboration_actions"
         private const val COLLABORATION_URL = "$BASE_COLLABORATION_URI/collaborations"
         private const val COMMENT_URL = "$COLLABORATION_URL/{$COLLABORATION_ID_FIELD}/comment"
-        private val log by logger(ObservabilityRestHandler::class.java)
+        private val log by logger(CollaborationsRestHandler::class.java)
     }
 
     /**
@@ -184,22 +182,23 @@ internal class CollaborationsRestHandler : BaseRestHandler() {
 //    }
 
 //    private fun executeDeleteRequest(request: RestRequest, client: NodeClient): RestChannelConsumer {
-//        val objectId: String? = request.param(OBJECT_ID_FIELD)
-//        val objectIdSet: Set<String> =
-//            request.paramAsStringArray(OBJECT_ID_LIST_FIELD, arrayOf(objectId))
+//        val collaborationId: String? = request.param(COLLABORATION_ID_FIELD)
+//        val collaborationIdSet: Set<String> =
+//            request.paramAsStringArray(COLLABORATION_ID_FIELD, arrayOf(collaborationId))
 //                .filter { s -> !s.isNullOrBlank() }
 //                .toSet()
 //        return RestChannelConsumer {
-//            if (objectIdSet.isEmpty()) {
+//            if (collaborationIdSet.isEmpty()) {
 //                it.sendResponse(
 //                    BytesRestResponse(
 //                        RestStatus.BAD_REQUEST,
-//                        "either $OBJECT_ID_FIELD or $OBJECT_ID_LIST_FIELD is required"
+//                        "Either $COLLABORATION_ID_FIELD or $COLLABORATION_ID_LIST_FIELD is required"
 //                    )
 //                )
 //            } else {
 //                client.execute(
-//                    DeleteObservabilityObjectAction.ACTION_TYPE,
+//                    gs
+//                        DeleteObservabilityObjectAction.ACTION_TYPE,
 //                    DeleteObservabilityObjectRequest(objectIdSet),
 //                    RestResponseToXContentListener(it)
 //                )
@@ -211,9 +210,9 @@ internal class CollaborationsRestHandler : BaseRestHandler() {
      * {@inheritDoc}
      */
     override fun prepareRequest(request: RestRequest, client: NodeClient): RestChannelConsumer {
-        log.info("Abbas uri(): ${request.uri()}")
-        log.info("Abbas path(): ${request.path()}")
-        log.info("Abbas rawPath: ${request.rawPath()}")
+        log.info(" uri(): ${request.uri()}")
+        log.info(" path(): ${request.path()}")
+        log.info(" rawPath: ${request.rawPath()}")
         return when (request.method()) {
             POST -> executePostRequest(request, client)
 //            PUT -> executePutRequest(request, client)
@@ -225,20 +224,20 @@ internal class CollaborationsRestHandler : BaseRestHandler() {
         }
     }
 
-    private fun getObjectIdSet(objectId: String?, objectIdList: String?): Set<String> {
-        var retIds: Set<String> = setOf()
-        if (objectId != null) {
-            retIds = setOf(objectId)
-        }
-        if (objectIdList != null) {
-            retIds = objectIdList.split(",").union(retIds)
-        }
-        return retIds
-    }
-
-    private fun getTypesSet(typesString: String?): EnumSet<ObservabilityObjectType> {
-        var types: EnumSet<ObservabilityObjectType> = EnumSet.noneOf(ObservabilityObjectType::class.java)
-        typesString?.split(",")?.forEach { types.add(ObservabilityObjectType.fromTagOrDefault(it)) }
-        return types
-    }
+//    private fun getObjectIdSet(objectId: String?, objectIdList: String?): Set<String> {
+//        var retIds: Set<String> = setOf()
+//        if (objectId != null) {
+//            retIds = setOf(objectId)
+//        }
+//        if (objectIdList != null) {
+//            retIds = objectIdList.split(",").union(retIds)
+//        }
+//        return retIds
+//    }
+//
+//    private fun getTypesSet(typesString: String?): EnumSet<ObservabilityObjectType> {
+//        var types: EnumSet<ObservabilityObjectType> = EnumSet.noneOf(ObservabilityObjectType::class.java)
+//        typesString?.split(",")?.forEach { types.add(ObservabilityObjectType.fromTagOrDefault(it)) }
+//        return types
+//    }
 }

@@ -13,8 +13,8 @@ import java.util.EnumSet
 /**
  * Enum for ObservabilityObject type
  */
-enum class CollaborationDataType(val tag: String)  {
-    NONE("none") { //TODO: remove if not needed
+enum class CollaborationDataType(val tag: String) {
+    NONE("none") { // TODO: remove if not needed
         override fun toString(): String {
             return tag
         }
@@ -30,7 +30,7 @@ enum class CollaborationDataType(val tag: String)  {
         }
     };
 
-    companion object { //TODO: remove if not needed
+    companion object { // TODO: remove if not needed
         private val tagMap = CollaborationDataType.values().associateBy { it.tag }
 
         val enumParser = EnumParser { fromTagOrDefault(it) }

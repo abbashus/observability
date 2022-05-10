@@ -13,8 +13,9 @@ import org.opensearch.common.xcontent.XContentParserUtils
 import org.opensearch.commons.utils.fieldIfNotNull
 import org.opensearch.commons.utils.logger
 import org.opensearch.observability.model.BaseObjectData
+import org.opensearch.observability.model.CollaborationObjectDataProperties.createObjectData
+import org.opensearch.observability.model.CollaborationObjectDataProperties.getReaderForObjectType
 import org.opensearch.observability.model.CollaborationObjectType
-import org.opensearch.observability.model.CollaborationObjectDataProperties
 import org.opensearch.observability.model.RestTag.COLLABORATION_ID_FIELD
 import java.io.IOException
 
@@ -59,7 +60,7 @@ internal class CreateCollaborationObjectRequest : ActionRequest, ToXContentObjec
                     else -> {
                         val objectTypeForTag = CollaborationObjectType.fromTagOrDefault(fieldName)
                         if (objectTypeForTag != CollaborationObjectType.NONE && baseObjectData == null) {
-                            baseObjectData = CollaborationObjectDataProperties.createObjectData(objectTypeForTag, parser)
+                            baseObjectData = createObjectData(objectTypeForTag, parser)
                             type = objectTypeForTag
                         } else {
                             parser.skipChildren()
@@ -70,6 +71,9 @@ internal class CreateCollaborationObjectRequest : ActionRequest, ToXContentObjec
             }
             type ?: throw IllegalArgumentException("Object type field absent")
             baseObjectData ?: throw IllegalArgumentException("Object data field absent")
+            log.info("collaborationId: $collaborationId")
+            log.info("collab object type: $type")
+            log.info("collab object data: $baseObjectData")
             return CreateCollaborationObjectRequest(collaborationId, type, baseObjectData)
         }
     }
@@ -104,7 +108,7 @@ internal class CreateCollaborationObjectRequest : ActionRequest, ToXContentObjec
     constructor(input: StreamInput) : super(input) {
         collaborationId = input.readOptionalString()
         type = input.readEnum(CollaborationObjectType::class.java)
-        objectData = input.readOptionalWriteable(CollaborationObjectDataProperties.getReaderForObjectType(input.readEnum(CollaborationObjectType::class.java)))
+        objectData = input.readOptionalWriteable(getReaderForObjectType(input.readEnum(CollaborationObjectType::class.java)))
     }
 
     /**

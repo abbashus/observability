@@ -11,6 +11,7 @@ import org.opensearch.client.Client
 import org.opensearch.common.inject.Inject
 import org.opensearch.common.xcontent.NamedXContentRegistry
 import org.opensearch.commons.authuser.User
+import org.opensearch.commons.utils.logger
 import org.opensearch.transport.TransportService
 
 /**
@@ -29,6 +30,7 @@ internal class CreateCollaborationObjectAction @Inject constructor(
     ::CreateCollaborationObjectRequest
 ) {
     companion object {
+        private val log by logger(CreateCollaborationObjectAction::class.java)
         private const val NAME = "cluster:admin/opensearch/observability/collaboration/create"
         internal val ACTION_TYPE = ActionType(NAME, ::CreateCollaborationObjectResponse)
     }
@@ -40,6 +42,7 @@ internal class CreateCollaborationObjectAction @Inject constructor(
         request: CreateCollaborationObjectRequest,
         user: User?
     ): CreateCollaborationObjectResponse {
+        log.info("running CreateCollaborationObjectAction.executeRequest")
         return CollaborationActions.create(request, user)
     }
 }

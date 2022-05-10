@@ -89,5 +89,4 @@ internal class CreateCollaborationObjectResponse : BaseResponse {
             .field(COLLABORATION_ID_FIELD, collaborationId)
             .endObject()
     }
-
 }

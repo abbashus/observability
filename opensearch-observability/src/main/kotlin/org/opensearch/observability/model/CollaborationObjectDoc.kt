@@ -15,7 +15,6 @@ import org.opensearch.observability.security.UserAccessManager
 import java.io.IOException
 import java.time.Instant
 
-
 /**
  * Data class representing CollaborationObject.
  */
@@ -28,7 +27,7 @@ data class CollaborationObjectDoc(
     val type: CollaborationObjectType,
     val objectData: BaseObjectData?
 
-) : BaseModel  {
+) : BaseModel {
 
     companion object {
         private val log by logger(CollaborationObjectDoc::class.java)

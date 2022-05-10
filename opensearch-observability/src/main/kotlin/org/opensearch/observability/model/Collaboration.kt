@@ -12,7 +12,6 @@ import org.opensearch.observability.ObservabilityPlugin
 import org.opensearch.observability.util.fieldIfNotNull
 import org.opensearch.observability.util.logger
 
-
 /**
 lastUpdatedTimeMs: <epoch_millis>
 createdTimeMs: <epoch_millis>
@@ -37,7 +36,6 @@ tags: ["prod" , "dashboard" ]? [same as in Grafana, may be we can do search comm
 resolved: true | false (defaults to false)
  */
 
-
 internal data class Collaboration(
     val type: CollaborationDataType?,
 //    val textInfo: TextInfo? // TODO: better name, can this be null
@@ -46,7 +44,7 @@ internal data class Collaboration(
     val lineId: String?,
     val tags: String?,
     val resolved: Boolean
-): BaseObjectData {
+) : BaseObjectData {
 
     internal companion object {
         private val log by logger(Collaboration::class.java)
@@ -57,7 +55,6 @@ internal data class Collaboration(
         private const val LINE_TAG = "lineId"
         private const val TAGS_TAG = "tags"
         private const val RESOLVED_TAG = "resolved"
-
 
         /**
          * reader to create instance of class from writable.
@@ -101,12 +98,12 @@ internal data class Collaboration(
                 val fieldName = parser.currentName()
                 parser.nextToken()
                 when (fieldName) {
-                    TYPE_TAG -> type = CollaborationDataType.TEXT //TODO: make it generic
-//                    TEXT_INFO_TAG -> textInfo = parser.text() //TODO: fix , add parser to TextInfo
+                    TYPE_TAG -> type = CollaborationDataType.TEXT // TODO: make it generic
+                    // TEXT_INFO_TAG -> textInfo = parser.text() // TODO: fix , add parser to TextInfo
                     PAGE_TAG -> pageId = parser.text()
                     PARAGRAPH_TAG -> paragraphId = parser.text()
                     LINE_TAG -> lineId = parser.text()
-//                    TAGS_TAG -> tags = parseTagList(parser)
+                    // TAGS_TAG -> tags = parseTagList(parser)
                     TAGS_TAG -> tags = parser.text()
                     RESOLVED_TAG -> resolved = parser.booleanValue()
                     else -> {
@@ -115,6 +112,14 @@ internal data class Collaboration(
                     }
                 }
             }
+            log.info("====== Collaboration : start==========")
+            log.info("$TYPE_TAG: $type")
+            log.info("$PAGE_TAG: $pageId")
+            log.info("$PARAGRAPH_TAG: $paragraphId")
+            log.info("$LINE_TAG: $lineId")
+            log.info("$TAGS_TAG: $tags")
+            log.info("$RESOLVED_TAG: $resolved")
+            log.info("====== Collaboration : end ==========")
             return Collaboration(type, pageId, paragraphId, lineId, tags, resolved)
         }
     }
@@ -138,7 +143,7 @@ internal data class Collaboration(
         paragraphId = input.readString(),
         lineId = input.readString(),
 //        textInfo = input.readOptionalWriteable(TextInfo.reader),
-        tags = input.readString(), //TODO change to list
+        tags = input.readString(), // TODO change to list
         resolved = input.readBoolean(),
     )
 
@@ -160,7 +165,7 @@ internal data class Collaboration(
      * {@inheritDoc}
      */
     override fun toXContent(builder: XContentBuilder?, params: ToXContent.Params?): XContentBuilder {
-        val xContentParams = params ?: RestTag.REST_OUTPUT_PARAMS
+//        val xContentParams = params ?: RestTag.REST_OUTPUT_PARAMS
         builder!!
         builder.startObject()
             .fieldIfNotNull(TYPE_TAG, type)

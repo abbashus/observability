@@ -5,7 +5,6 @@ import org.opensearch.observability.model.RestTag.COLLABORATION_FIELD
 import org.opensearch.observability.model.RestTag.COMMENT_FIELD
 import java.util.EnumSet
 
-
 /**
  * Enum for ObservabilityObject type
  */
@@ -46,5 +45,4 @@ enum class CollaborationObjectType(val tag: String) {
             return allTypes
         }
     }
-
 }

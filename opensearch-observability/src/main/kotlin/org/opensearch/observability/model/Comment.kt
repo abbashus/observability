@@ -3,7 +3,11 @@ package org.opensearch.observability.model
 import org.opensearch.common.io.stream.StreamInput
 import org.opensearch.common.io.stream.StreamOutput
 import org.opensearch.common.io.stream.Writeable
-import org.opensearch.common.xcontent.*
+import org.opensearch.common.xcontent.ToXContent
+import org.opensearch.common.xcontent.XContentBuilder
+import org.opensearch.common.xcontent.XContentFactory
+import org.opensearch.common.xcontent.XContentParser
+import org.opensearch.common.xcontent.XContentParserUtils
 import org.opensearch.observability.ObservabilityPlugin
 import org.opensearch.observability.util.fieldIfNotNull
 import org.opensearch.observability.util.logger
@@ -28,7 +32,6 @@ text: "the new security patch was deployed at this point? does this correlate to
  * }
  * }</pre>
  */
-
 
 internal data class Comment(
     val collaborationId: String?,
@@ -119,12 +122,11 @@ internal data class Comment(
      * {@inheritDoc}
      */
     override fun toXContent(builder: XContentBuilder?, params: ToXContent.Params?): XContentBuilder {
-        val xContentParams = params ?: RestTag.REST_OUTPUT_PARAMS
+//        val xContentParams = params ?: RestTag.REST_OUTPUT_PARAMS
         builder!!
         builder.startObject()
             .fieldIfNotNull(ID_TAG, collaborationId)
             .fieldIfNotNull(TEXT_TAG, text)
         return builder.endObject()
     }
-
 }

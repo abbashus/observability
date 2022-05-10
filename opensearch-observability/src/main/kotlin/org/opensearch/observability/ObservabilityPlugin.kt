@@ -19,6 +19,7 @@ import org.opensearch.common.settings.SettingsFilter
 import org.opensearch.common.xcontent.NamedXContentRegistry
 import org.opensearch.env.Environment
 import org.opensearch.env.NodeEnvironment
+import org.opensearch.observability.action.CreateCollaborationObjectAction
 import org.opensearch.observability.action.CreateObservabilityObjectAction
 import org.opensearch.observability.action.DeleteObservabilityObjectAction
 import org.opensearch.observability.action.GetObservabilityObjectAction
@@ -119,7 +120,11 @@ class ObservabilityPlugin : Plugin(), ActionPlugin {
             ActionPlugin.ActionHandler(
                 UpdateObservabilityObjectAction.ACTION_TYPE,
                 UpdateObservabilityObjectAction::class.java
-            )
+            ),
+            ActionPlugin.ActionHandler(
+                CreateCollaborationObjectAction.ACTION_TYPE,
+                CreateCollaborationObjectAction::class.java
+            ),
         )
     }
 }
