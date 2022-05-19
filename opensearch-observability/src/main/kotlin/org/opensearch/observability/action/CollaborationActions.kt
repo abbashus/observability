@@ -43,18 +43,84 @@ internal object CollaborationActions {
         return CreateCollaborationObjectResponse(docId)
     }
 
-//    /**
-//     * Delete ObservabilityObject
-//     * @param request [DeleteObservabilityObjectRequest] object
-//     * @param user the user info object
-//     * @return [DeleteObservabilityObjectResponse]
-//     */
-//    fun delete(request: DeleteObservabilityObjectRequest, user: User?): DeleteObservabilityObjectResponse {
-//        ObservabilityActions.log.info("${ObservabilityPlugin.LOG_PREFIX}:ObservabilityObject-delete ${request.objectIds}")
-//        return if (request.objectIds.size == 1) {
-//            ObservabilityActions.delete(request.objectIds.first(), user)
-//        } else {
-//            ObservabilityActions.delete(request.objectIds, user)
-//        }
-//    }
+    /**
+     * Delete CollaborationObject
+     * @param request [DeleteCollaborationObjectRequest] object
+     * @param user the user info object
+     * @return [DeleteCollaborationObjectResponse]
+     */
+    fun delete(request: DeleteCollaborationObjectRequest, user: User?): DeleteCollaborationObjectResponse {
+        log.info("${ObservabilityPlugin.LOG_PREFIX}:CollaborationObject-delete ${request.collaborationIds}")
+        return if (request.collaborationIds.size == 1) {
+            delete(request.collaborationIds.first(), user)
+        } else {
+            delete(request.collaborationIds, user)
+        }
+    }
+
+    /**
+     * Delete by collaboration id
+     *
+     * @param collaborationId
+     * @param user
+     * @return [DeleteCollaborationObjectResponse]
+     */
+    private fun delete(collaborationId: String, user: User?): DeleteCollaborationObjectResponse {
+        log.info("${ObservabilityPlugin.LOG_PREFIX}:CollaborationObject-delete $collaborationId")
+        UserAccessManager.validateUser(user)
+        val collaborationObjectDocInfo = CollaborationIndex.getCollaborationObject(collaborationId)
+        collaborationObjectDocInfo
+            ?: run {
+                throw OpenSearchStatusException(
+                    "CollaborationObject $collaborationId not found",
+                    RestStatus.NOT_FOUND
+                )
+            }
+
+        val currentDoc = collaborationObjectDocInfo.collaborationObjectDoc
+        if (!UserAccessManager.doesUserHasAccess(user, currentDoc.tenant, currentDoc.access)) {
+            throw OpenSearchStatusException(
+                "Permission denied for CollaborationObject $collaborationId",
+                RestStatus.FORBIDDEN
+            )
+        }
+        if (!CollaborationIndex.deleteCollaborationObject(collaborationId)) {
+            throw OpenSearchStatusException(
+                "CollaborationObject $collaborationId delete failed",
+                RestStatus.REQUEST_TIMEOUT
+            )
+        }
+        return DeleteCollaborationObjectResponse(mapOf(Pair(collaborationId, RestStatus.OK)))
+    }
+
+    /**
+     * Delete CollaborationObjects
+     * @param collaborationIds CollaborationObject ids
+     * @param user the user info object
+     * @return [DeleteCollaborationObjectResponse]
+     */
+    private fun delete(collaborationIds: Set<String>, user: User?): DeleteCollaborationObjectResponse {
+        log.info("${ObservabilityPlugin.LOG_PREFIX}:CollaborationObject-delete $collaborationIds")
+        UserAccessManager.validateUser(user)
+        val configDocs = CollaborationIndex.getCollaborationObjects(collaborationIds)
+        if (configDocs.size != collaborationIds.size) {
+            val mutableSet = collaborationIds.toMutableSet()
+            configDocs.forEach { mutableSet.remove(it.id) }
+            throw OpenSearchStatusException(
+                "CollaborationObject $mutableSet not found",
+                RestStatus.NOT_FOUND
+            )
+        }
+        configDocs.forEach {
+            val currentDoc = it.collaborationObjectDoc
+            if (!UserAccessManager.doesUserHasAccess(user, currentDoc.tenant, currentDoc.access)) {
+                throw OpenSearchStatusException(
+                    "Permission denied for CollaborationObject ${it.id}",
+                    RestStatus.FORBIDDEN
+                )
+            }
+        }
+        val deleteStatus = CollaborationIndex.deleteCollaborationObjects(collaborationIds)
+        return DeleteCollaborationObjectResponse(deleteStatus)
+    }
 }

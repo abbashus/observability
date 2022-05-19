@@ -7,45 +7,30 @@ package org.opensearch.observability.index
 
 import org.opensearch.ResourceAlreadyExistsException
 import org.opensearch.action.DocWriteResponse
-// import org.opensearch.ResourceNotFoundException
-// import org.opensearch.action.DocWriteResponse
 import org.opensearch.action.admin.indices.create.CreateIndexRequest
 import org.opensearch.action.admin.indices.mapping.put.PutMappingRequest
+import org.opensearch.action.bulk.BulkRequest
+import org.opensearch.action.delete.DeleteRequest
+import org.opensearch.action.get.GetRequest
+import org.opensearch.action.get.GetResponse
+import org.opensearch.action.get.MultiGetRequest
 import org.opensearch.action.index.IndexRequest
-// import org.opensearch.action.bulk.BulkRequest
-// import org.opensearch.action.delete.DeleteRequest
-// import org.opensearch.action.get.GetRequest
-// import org.opensearch.action.get.GetResponse
-// import org.opensearch.action.get.MultiGetRequest
-// import org.opensearch.action.index.IndexRequest
-// import org.opensearch.action.search.SearchRequest
-// import org.opensearch.action.update.UpdateRequest
 import org.opensearch.client.Client
 import org.opensearch.cluster.service.ClusterService
-// import org.opensearch.common.unit.TimeValue
 import org.opensearch.common.xcontent.LoggingDeprecationHandler
 import org.opensearch.common.xcontent.NamedXContentRegistry
 import org.opensearch.common.xcontent.XContentType
 import org.opensearch.index.IndexNotFoundException
-// import org.opensearch.index.query.QueryBuilders
-// import org.opensearch.index.reindex.ReindexAction
-// import org.opensearch.index.reindex.ReindexRequestBuilder
 import org.opensearch.observability.ObservabilityPlugin.Companion.LOG_PREFIX
 import org.opensearch.observability.model.CollaborationObjectDoc
-// import org.opensearch.observability.action.GetObservabilityObjectRequest
+import org.opensearch.observability.model.CollaborationObjectDocInfo
 import org.opensearch.observability.model.ObservabilityObjectDoc
-// import org.opensearch.observability.model.ObservabilityObjectDocInfo
-// import org.opensearch.observability.model.ObservabilityObjectSearchResult
-// import org.opensearch.observability.model.RestTag.ACCESS_LIST_FIELD
-// import org.opensearch.observability.model.RestTag.TENANT_FIELD
 import org.opensearch.observability.model.SearchResults
 import org.opensearch.observability.settings.PluginSettings
 import org.opensearch.observability.util.SecureIndexClient
 import org.opensearch.observability.util.logger
-// import org.opensearch.rest.RestStatus
+import org.opensearch.rest.RestStatus
 import org.opensearch.search.SearchHit
-// import org.opensearch.search.builder.SearchSourceBuilder
-// import java.util.concurrent.TimeUnit
 
 internal object CollaborationIndex {
     private val log by logger(CollaborationIndex::class.java)
@@ -136,6 +121,16 @@ internal object CollaborationIndex {
     }
 
     /**
+     * Check if the index is created and available.
+     * @param index
+     * @return true if index is available, false otherwise
+     */
+    private fun isIndexExists(index: String): Boolean {
+        val clusterState = clusterService.state()
+        return clusterState.routingTable.hasIndex(index)
+    }
+
+    /**
      * Create collaboration object
      *
      * @param collaborationObjectDoc
@@ -162,12 +157,100 @@ internal object CollaborationIndex {
     }
 
     /**
-     * Check if the index is created and available.
-     * @param index
-     * @return true if index is available, false otherwise
+     * Get collaboration object
+     *
+     * @param id
+     * @return [CollaborationObjectDocInfo]
      */
-    private fun isIndexExists(index: String): Boolean {
-        val clusterState = CollaborationIndex.clusterService.state()
-        return clusterState.routingTable.hasIndex(index)
+    fun getCollaborationObject(id: String): CollaborationObjectDocInfo? {
+        createIndex()
+        val getRequest = GetRequest(COLLABORATIONS_INDEX_NAME).id(id)
+        val actionFuture = client.get(getRequest)
+        val response = actionFuture.actionGet(PluginSettings.operationTimeoutMs)
+        return parseCollaborationObjectDoc(id, response)
+    }
+
+    /**
+     * Get multiple collaboration objects
+     *
+     * @param ids
+     * @return list of [CollaborationObjectDocInfo]
+     */
+    fun getCollaborationObjects(ids: Set<String>): List<CollaborationObjectDocInfo> {
+        createIndex()
+        val getRequest = MultiGetRequest()
+        ids.forEach { getRequest.add(COLLABORATIONS_INDEX_NAME, it) }
+        val actionFuture = client.multiGet(getRequest)
+        val response = actionFuture.actionGet(PluginSettings.operationTimeoutMs)
+        return response.responses.mapNotNull { parseCollaborationObjectDoc(it.id, it.response) }
+    }
+
+    /**
+     * Parse collaboration object doc
+     *
+     * @param id
+     * @param response
+     * @return [CollaborationObjectDocInfo]
+     */
+    private fun parseCollaborationObjectDoc(id: String, response: GetResponse): CollaborationObjectDocInfo? {
+        return if (response.sourceAsString == null) {
+            log.warn("$LOG_PREFIX:getCollaborationObject - $id not found; response:$response")
+            null
+        } else {
+            val parser = XContentType.JSON.xContent().createParser(
+                NamedXContentRegistry.EMPTY,
+                LoggingDeprecationHandler.INSTANCE,
+                response.sourceAsString
+            )
+            parser.nextToken()
+            val doc = CollaborationObjectDoc.parse(parser, id)
+            CollaborationObjectDocInfo(id, response.version, response.seqNo, response.primaryTerm, doc)
+        }
+    }
+
+    /**
+     * Delete collaboration object
+     *
+     * @param id
+     * @return true if successful, otherwise false
+     */
+    fun deleteCollaborationObject(id: String): Boolean {
+        createIndex()
+        val deleteRequest = DeleteRequest()
+            .index(COLLABORATIONS_INDEX_NAME)
+            .id(id)
+        val actionFuture = client.delete(deleteRequest)
+        val response = actionFuture.actionGet(PluginSettings.operationTimeoutMs)
+        if (response.result != DocWriteResponse.Result.DELETED) {
+            log.warn("$LOG_PREFIX:deleteCollaborationObject failed for $id; response:$response")
+        }
+        return response.result == DocWriteResponse.Result.DELETED
+    }
+
+    /**
+     * Delete multiple collaboration objects
+     *
+     * @param ids
+     * @return map of id to delete status
+     */
+    fun deleteCollaborationObjects(ids: Set<String>): Map<String, RestStatus> {
+        createIndex()
+        val bulkRequest = BulkRequest()
+        ids.forEach {
+            val deleteRequest = DeleteRequest()
+                .index(COLLABORATIONS_INDEX_NAME)
+                .id(it)
+            bulkRequest.add(deleteRequest)
+        }
+        val actionFuture = client.bulk(bulkRequest)
+        val response = actionFuture.actionGet(PluginSettings.operationTimeoutMs)
+        val mutableMap = mutableMapOf<String, RestStatus>()
+        response.forEach {
+            mutableMap[it.id] = it.status()
+            if (it.isFailed) {
+                log.warn("$LOG_PREFIX:deleteCollaborationObjects failed for ${it.id}; response:${it.failureMessage}")
+            }
+        }
+        return mutableMap
     }
 }

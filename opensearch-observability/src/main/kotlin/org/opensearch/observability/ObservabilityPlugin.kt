@@ -21,6 +21,7 @@ import org.opensearch.env.Environment
 import org.opensearch.env.NodeEnvironment
 import org.opensearch.observability.action.CreateCollaborationObjectAction
 import org.opensearch.observability.action.CreateObservabilityObjectAction
+import org.opensearch.observability.action.DeleteCollaborationObjectAction
 import org.opensearch.observability.action.DeleteObservabilityObjectAction
 import org.opensearch.observability.action.GetObservabilityObjectAction
 import org.opensearch.observability.action.UpdateObservabilityObjectAction
@@ -124,6 +125,10 @@ class ObservabilityPlugin : Plugin(), ActionPlugin {
             ActionPlugin.ActionHandler(
                 CreateCollaborationObjectAction.ACTION_TYPE,
                 CreateCollaborationObjectAction::class.java
+            ),
+            ActionPlugin.ActionHandler(
+                DeleteCollaborationObjectAction.ACTION_TYPE,
+                DeleteCollaborationObjectAction::class.java
             ),
         )
     }

@@ -7,10 +7,13 @@ package org.opensearch.observability.resthandler
 import org.opensearch.client.node.NodeClient
 import org.opensearch.commons.utils.logger
 import org.opensearch.observability.ObservabilityPlugin.Companion.BASE_COLLABORATION_URI
+import org.opensearch.observability.action.CollaborationActions
 import org.opensearch.observability.action.CreateCollaborationObjectAction
 import org.opensearch.observability.action.CreateCollaborationObjectRequest
+import org.opensearch.observability.action.DeleteCollaborationObjectAction
+import org.opensearch.observability.action.DeleteCollaborationObjectRequest
 import org.opensearch.observability.model.RestTag.COLLABORATION_ID_FIELD
-// import org.opensearch.observability.model.RestTag.COLLABORATION_ID_LIST_FIELD
+import org.opensearch.observability.model.RestTag.COLLABORATION_ID_LIST_FIELD
 import org.opensearch.observability.model.RestTag.COMMENT_ID_FIELD
 import org.opensearch.observability.util.contentParserNextToken
 import org.opensearch.rest.BaseRestHandler
@@ -181,30 +184,29 @@ internal class CollaborationsRestHandler : BaseRestHandler() {
 //        }
 //    }
 
-//    private fun executeDeleteRequest(request: RestRequest, client: NodeClient): RestChannelConsumer {
-//        val collaborationId: String? = request.param(COLLABORATION_ID_FIELD)
-//        val collaborationIdSet: Set<String> =
-//            request.paramAsStringArray(COLLABORATION_ID_FIELD, arrayOf(collaborationId))
-//                .filter { s -> !s.isNullOrBlank() }
-//                .toSet()
-//        return RestChannelConsumer {
-//            if (collaborationIdSet.isEmpty()) {
-//                it.sendResponse(
-//                    BytesRestResponse(
-//                        RestStatus.BAD_REQUEST,
-//                        "Either $COLLABORATION_ID_FIELD or $COLLABORATION_ID_LIST_FIELD is required"
-//                    )
-//                )
-//            } else {
-//                client.execute(
-//                    gs
-//                        DeleteObservabilityObjectAction.ACTION_TYPE,
-//                    DeleteObservabilityObjectRequest(objectIdSet),
-//                    RestResponseToXContentListener(it)
-//                )
-//            }
-//        }
-//    }
+    private fun executeDeleteRequest(request: RestRequest, client: NodeClient): RestChannelConsumer {
+        val collaborationId: String? = request.param(COLLABORATION_ID_FIELD)
+        val collaborationIdSet: Set<String> =
+            request.paramAsStringArray(COLLABORATION_ID_FIELD, arrayOf(collaborationId))
+                .filter { s -> !s.isNullOrBlank() }
+                .toSet()
+        return RestChannelConsumer {
+            if (collaborationIdSet.isEmpty()) {
+                it.sendResponse(
+                    BytesRestResponse(
+                        RestStatus.BAD_REQUEST,
+                        "Either $COLLABORATION_ID_FIELD or $COLLABORATION_ID_LIST_FIELD is required"
+                    )
+                )
+            } else {
+                client.execute(
+                    DeleteCollaborationObjectAction.ACTION_TYPE,
+                    DeleteCollaborationObjectRequest(collaborationIdSet),
+                    RestResponseToXContentListener(it)
+                )
+            }
+        }
+    }
 
     /**
      * {@inheritDoc}
@@ -217,7 +219,7 @@ internal class CollaborationsRestHandler : BaseRestHandler() {
             POST -> executePostRequest(request, client)
 //            PUT -> executePutRequest(request, client)
 //            GET -> executeGetRequest(request, client)
-//            DELETE -> executeDeleteRequest(request, client)
+            DELETE -> executeDeleteRequest(request, client)
             else -> RestChannelConsumer {
                 it.sendResponse(BytesRestResponse(RestStatus.METHOD_NOT_ALLOWED, "${request.method()} is not allowed"))
             }
